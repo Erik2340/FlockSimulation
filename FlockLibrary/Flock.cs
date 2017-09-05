@@ -7,6 +7,7 @@ namespace FlockLibrary
 
         public List<Bird> Birds { get; set; }
         public Queen Queen { get; set; }
+        public Predator Predator { get; set; }
         public double KineticEnergy
         {
             get

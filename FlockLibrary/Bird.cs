@@ -24,6 +24,11 @@ namespace FlockLibrary
             {-1, 0 }
         });
         public string Id { get; set; }
+       public double fearlvl { get; set; }
+
+
+
+
 
         public Vector<double> Vectorbetween(Bird other)
         {
@@ -33,6 +38,14 @@ namespace FlockLibrary
         {
             return this.Position - other.Position;
         }
+        public Vector<double> Vectorbetween(Predator other)
+        {
+            return this.Position - other.Position;
+        }
+
+
+
+
         public Bird()
         {
             Position = DenseVector.OfArray(new double[] { 0, 0 });

@@ -26,6 +26,7 @@ namespace FlockApp
         private readonly DispatcherTimer _timer = new DispatcherTimer();
         private readonly Random _random = new Random();
         private Flock flock;
+        
 
         public MainWindow()
         {
@@ -80,6 +81,10 @@ namespace FlockApp
             flock.Queen = new Queen();
             flock.Queen.Color = new FlockLibrary.Color(255, 0, 0); 
             flock.Queen.setPosition(50, 50);
+            flock.Predator = new Predator();
+            flock.Predator.setPosition(200, 200);
+            flock.Predator.setSpeed((_random.NextDouble() - 0.5) * 10, (_random.NextDouble() - 0.5) * 10);
+            flock.Predator.Color = new FlockLibrary.Color(0, 0, 0);
             return flock;
         }
 
@@ -98,9 +103,8 @@ namespace FlockApp
             {
                 DrawBird(bird);
             }
-
+            DrawPredator(flock.Predator);
             DrawQueen(flock.Queen);
-
             DrawEnergy(flock);
         }
 
@@ -128,14 +132,25 @@ namespace FlockApp
             el.Fill = color;
             Canvas.SetTop(el, flock.Queen.Position[1]);
             Canvas.SetLeft(el, flock.Queen.Position[0]);
-
             Canvas.Children.Add(el);
 
             
          }
+        private void DrawPredator(Predator predator)
+        {
+            var color = new SolidColorBrush(System.Windows.Media.Color.FromRgb(predator.Color.Red, predator.Color.Green, predator.Color.Blue));
+            Ellipse el = new Ellipse();
+            el.Height = flock.Predator.size[1];
+            el.Width = flock.Predator.size[0];
+            el.Fill = color;
+            Canvas.SetTop(el, flock.Predator.Position[1]);
+            Canvas.SetLeft(el, flock.Predator.Position[0]);
+            Canvas.Children.Add(el);
+        }
 
         private void MoveFlock(Flock flock)
         {
+            flock.Predator.Position += flock.Predator.Speed;
 
             if (flock.Queen.Position[0] > Canvas.ActualWidth)
             {
@@ -153,6 +168,26 @@ namespace FlockApp
             {
                 flock.Queen.Position[1] = Canvas.ActualHeight;
             }
+
+
+
+            if (flock.Predator.Position[0] > Canvas.ActualWidth)
+            {
+                flock.Predator.Position[0] = 0;
+            }
+            if (flock.Predator.Position[1] > Canvas.ActualHeight)
+            {
+                flock.Predator.Position[1] = 0;
+            }
+            if (flock.Predator.Position[0] < 0)
+            {
+                flock.Predator.Position[0] = Canvas.ActualWidth;
+            }
+            if (flock.Predator.Position[1] < 0)
+            {
+                flock.Predator.Position[1] = Canvas.ActualHeight;
+            }
+
 
             foreach (var bird in flock.Birds)
             {
@@ -179,14 +214,36 @@ namespace FlockApp
             for (var i = 0; i < flock.Birds.Count; i++)
             {
                 var birdI = flock.Birds[i];
+                if (birdI.Vectorbetween(flock.Predator).Norm(2)< flock.Predator.killzone)
+                {
+                    flock.Birds.RemoveAt(i);
+                    flock.Predator.size[0] += 0.5;
+                    flock.Predator.size[1] += 0.5;
+                    flock.Predator.killzone += 0.5;
+
+                }
                 var queen = flock.Queen;
                 var deltaQ = birdI.Vectorbetween(queen);
                 var distanceQ = deltaQ.Norm(2);
                 if (distanceQ == 0.0) break;
-                var forceQ = (-1 / distanceQ * distanceQ);
+                var forceQ = (-1 / distanceQ * distanceQ)*3;
                 if (distanceQ < 25) { forceQ = 10; };
                 deltaQ = deltaQ.Normalize(2);
                 birdI.Speed = birdI.Speed + forceQ * deltaQ;
+
+
+                var predator = flock.Predator;
+                var deltaP = birdI.Vectorbetween(flock.Predator);
+                var distanceP = deltaP.Norm(2);
+                var forceP = 2.5 / distanceP;
+                deltaP = deltaP.Normalize(2);
+                birdI.fearlvl = flock.Predator.killzone * 0.045;
+                birdI.Speed = birdI.Speed + deltaP* forceP*150* birdI.fearlvl;
+                if (flock.Birds.Count > 0)
+                {
+                    flock.Predator.Speed = flock.Predator.Speed + forceP * deltaP * 1.5 * (200 / flock.Birds.Count);
+                }
+              
 
 
                 for (var k = 0; k < i; k++)
@@ -206,11 +263,12 @@ namespace FlockApp
                 birdI.Speed[1] += (_random.NextDouble() - 0.5) * 0.1;
 
                 birdI.Speed -= birdI.Speed * 0.3;
+               
 
                 //birdI.Speed[0] += 0.25;
 
             }
-
+            flock.Predator.Speed = flock.Predator.Speed * 0.9;
         }
 
         private void DrawBird(Bird bird)

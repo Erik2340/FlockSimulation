@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bird.cs" />
+    <Compile Include="Predator.cs" />
     <Compile Include="Color.cs" />
     <Compile Include="FlockSerializer.cs" />
     <Compile Include="Flock.cs" />
